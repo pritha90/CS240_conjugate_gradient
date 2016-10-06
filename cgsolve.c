@@ -11,19 +11,23 @@ double* cgsolve(int p, int n, int rank, double *b, int niters, int maxiterations
 {
     
 double relres=1, alpha, beta,normb,rtrold,rtr;
-double * Ad, * d, *x, *r;
+double * Ad = malloc(n/p * sizeof(double)), * d = malloc(n/p * sizeof(double)), *x = malloc(n/p * sizeof(double)), *r = malloc(n/p * sizeof(double));
 double dot_product, dAd;
 int i;
 for(i=rank*n/p+1;i<=(rank+1)*n/p;i++)
 {
+    printf("i = %d\n", i-rank*n/p-1);
     x[i-rank*n/p-1]=0;
+     printf("two i = %d\n", i-rank*n/p-1);
     r[i-rank*n/p-1]=b[i-rank*n/p-1];
+	 printf("three i = %d\n", i-rank*n/p-1);
     d[i-rank*n/p-1]=r[i-rank*n/p-1];
+     printf("four i = %d\n", i-rank*n/p-1);
 
 }
 dot_product = ddot(r,r);
 MPI_Reduce(&dot_product, &rtr,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-
+printf("dot_product %f\n", dot_product);
     if(rank==0)
 {
     normb=sqrt(rtr);
