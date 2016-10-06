@@ -2,7 +2,7 @@
 #include "hw2harness.c"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "cgsolve.c"
 double* load_vec( char* filename, int* k );
 void save_vec( int k, double* x );
 
@@ -43,11 +43,11 @@ int main( int argc, char* argv[] ) {
 for ( i =0; i <n/p; i++)
         printf("%f", b[i]);    
     t1 = MPI_Wtime();
-//    double* cgsolve(int p, int n, int rank, double *b, int&niters, int maxiterations)
-    double x_initial[n];
-    x = x_initial;
+//    double x_initial[n];
+  //  x = x_initial;
+    x = cgsolve(p, n, rank, b, niters, maxiterations);
+    printf("size = %d %d", sizeof(b), sizeof(x));
     t2 = MPI_Wtime();
-    
     if ( writeOutX ) {
         save_vec( k, x );
     }
