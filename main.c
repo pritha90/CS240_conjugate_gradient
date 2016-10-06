@@ -1,5 +1,5 @@
 #include "mpi.h"
-#include "hw2harness.h"
+#include "hw2harness.c"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,7 +10,7 @@ void save_vec( int k, double* x );
 
 int main( int argc, char* argv[] ) {
     int writeOutX = 0;
-    int n, k;
+    int n, k, p, rank, i;
     int maxiterations = 1000;
     int niters=0;
     double norm;
@@ -21,15 +21,15 @@ int main( int argc, char* argv[] ) {
     
     MPI_Init( &argc, &argv );
     MPI_Comm_size(MPI_COMM_WORLD,&p);
-    MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-    
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     
     if ( argc == 3 ) {
         k = atoi( argv[1] );
         n = k*k;
-        double b[n,p];
-        for(i=rank*n/p+1;i<=(rank+1)*n/p;i++)
-            b(i-rank*n/p-1)=getb(i,n);
+        b  = malloc(n/p * sizeof(double));;
+        for(i=rank*n/p+1;i<=(rank+1)*n/p;i++){
+            b[i-rank*n/p-1] = cs240_getB(i,n);
+	}
     } else if  ( !strcmp( argv[1], "-i" ) && argc == 4 ) {
         b = load_vec( argv[2], &k );
     } else {
@@ -39,10 +39,11 @@ int main( int argc, char* argv[] ) {
         exit(0);
     }
     writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
-    
-    
+   
+for ( i =0; i <n/p; i++)
+        printf("%f", b[i]);    
     t1 = MPI_Wtime();
-    double* cgsolve(int p, int n, int rank, double *b, int&niters, int maxiterations)
+//    double* cgsolve(int p, int n, int rank, double *b, int&niters, int maxiterations)
     double x_initial[n];
     x = x_initial;
     t2 = MPI_Wtime();
@@ -115,254 +116,3 @@ void save_vec( int k, double* x ) {
     
     fclose( oFile );
 }
-
- *
- *  * NAMES#include "mpi.h"
- *  #include "hw2harness.h"
- *  #include <stdio.h>
- *  #include <stdlib.h>
- *
- *  double* load_vec( char* filename, int* k );
- *  void save_vec( int k, double* x );
- *
- *
- *
- *  int main( int argc, char* argv[] ) {
- *  	int writeOutX = 0;
- *  		int n, k;
- *  			int maxiterations = 1000;
- *  				int niters=0;
- *  				 	double norm;
- *  				 		double* b;
- *  				 			double* x;
- *  				 				double time;
- *  				 					double t1, t2;
- *  				 						
- *  				 							MPI_Init( &argc, &argv );
- *  				 							            MPI_Comm_size(MPI_COMM_WORLD,&p);
- *  				 							                       MPI_Comm_rank(MPI_COMM_WORLD,&myid);
- *
- *  				 							                       	
- *  				 							                       		if ( argc == 3 ) {
- *  				 							                       				k = atoi( argv[1] );
- *  				 							                       						n = k*k;
- *  				 							                       						                       double b[n,p];
- *  				 							                       						                                            for(i=rank*n/p+1;i<=(rank+1)*n/p;i++)
- *  				 							                       						                                                                 b(i-rank*n/p-1)=getb(i,n);
- *  				 							                       						                                                                 	} else if  ( !strcmp( argv[1], "-i" ) && argc == 4 ) {
- *  				 							                       						                                                                 			b = load_vec( argv[2], &k );
- *  				 							                       						                                                                 				} else {
- *  				 							                       						                                                                 						printf( "\nCGSOLVE Usage: \n\t"
- *  				 							                       						                                                                 									"Model Problem:\tmpirun -np [number_procs] cgsolve [k] [output_1=y_0=n]\n\t"
- *  				 							                       						                                                                 												"Custom Input:\tmpirun -np [number_procs] cgsolve -i [input_filename] [output_1=y_0=n]\n\n");
- *  				 							                       						                                                                 														exit(0);
- *  				 							                       						                                                                 															}
- *  				 							                       						                                                                 																writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
- *
- *  				 							                       						                                                                 																	
- *  				 							                       						                                                                 																		t1 = MPI_Wtime();
- *  				 							                       						                                                                 																			double* cgsolve(int p, int n, int rank, double *b, int&niters, int maxiterations)
- *  				 							                       						                                                                 																			            double x_initial[n];
- *  				 							                       						                                                                 																			            	x = x_initial;	
- *  				 							                       						                                                                 																			            		t2 = MPI_Wtime();
- *  				 							                       						                                                                 																			            			
- *  				 							                       						                                                                 																			            				if ( writeOutX ) {
- *  				 							                       						                                                                 																			            						save_vec( k, x );
- *  				 							                       						                                                                 																			            							}
- *  				 							                       						                                                                 																			            									
- *  				 							                       						                                                                 																			            										printf( "Problem size (k): %d\n",k);
- *  				 							                       						                                                                 																			            											if(niters>0){
- *  				 							                       						                                                                 																			            											          printf( "Norm of the residual after %d iterations: %lf\n",niters,norm);
- *  				 							                       						                                                                 																			            											                  }
- *  				 							                       						                                                                 																			            											                  	printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
- *  				 							                       						                                                                 																			            											                  		
- *  				 							                       						                                                                 																			            											                  		       if(niters > 0){
- *  				 							                       						                                                                 																			            											                  		       	  free(b);
- *  				 							                       						                                                                 																			            											                  		       	  	}
- *  				 							                       						                                                                 																			            											                  		       	  	        if(niters > 0){
- *  				 							                       						                                                                 																			            											                  		       	  	                  free(x);
- *  				 							                       						                                                                 																			            											                  		       	  	                  	}
- *  				 							                       						                                                                 																			            											                  		       	  	                  		
- *  				 							                       						                                                                 																			            											                  		       	  	                  			MPI_Finalize();
- *  				 							                       						                                                                 																			            											                  		       	  	                  				
- *  				 							                       						                                                                 																			            											                  		       	  	                  					return 0;
- *  				 							                       						                                                                 																			            											                  		       	  	                  					}
- *
- *
- *  				 							                       						                                                                 																			            											                  		       	  	                  					double* load_vec( char* filename, int* k ) {
- *  				 							                       						                                                                 																			            											                  		       	  	                  						FILE* iFile = fopen(filename, "r");
- *  				 							                       						                                                                 																			            											                  		       	  	                  							int nScan;
- *  				 							                       						                                                                 																			            											                  		       	  	                  								int nTotal = 0;
- *  				 							                       						                                                                 																			            											                  		       	  	                  									int n;
- *  				 							                       						                                                                 																			            											                  		       	  	                  										
- *  				 							                       						                                                                 																			            											                  		       	  	                  											if ( iFile == NULL ) {
- *  				 							                       						                                                                 																			            											                  		       	  	                  													printf("Error reading file.\n");
- *  				 							                       						                                                                 																			            											                  		       	  	                  															exit(0);
- *  				 							                       						                                                                 																			            											                  		       	  	                  																}
- *  				 							                       						                                                                 																			            											                  		       	  	                  																	
- *  				 							                       						                                                                 																			            											                  		       	  	                  																		nScan = fscanf( iFile, "k=%d\n", k );
- *  				 							                       						                                                                 																			            											                  		       	  	                  																			if ( nScan != 1 ) {
- *  				 							                       						                                                                 																			            											                  		       	  	                  																					printf("Error reading dimensions.\n");
- *  				 							                       						                                                                 																			            											                  		       	  	                  																							exit(0);
- *  				 							                       						                                                                 																			            											                  		       	  	                  																								}
- *  				 							                       						                                                                 																			            											                  		       	  	                  																									
- *  				 							                       						                                                                 																			            											                  		       	  	                  																										n = (*k)*(*k);
- *  				 							                       						                                                                 																			            											                  		       	  	                  																											double* vec = (double *)malloc( n * sizeof(double) );
- *  				 							                       						                                                                 																			            											                  		       	  	                  																												
- *  				 							                       						                                                                 																			            											                  		       	  	                  																													do {
- *  				 							                       						                                                                 																			            											                  		       	  	                  																															nScan = fscanf( iFile, "%lf", &vec[nTotal++] );
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																} while ( nScan >= 0 );
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																	
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																		if ( nTotal != n+1 ) {
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																				printf("Incorrect number of values scanned n=%d, nTotal=%d.\n",n,nTotal);
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																						exit(0);
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																							}
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																								
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																									return vec;
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																									}
- *
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																									void save_vec( int k, double* x ) { 
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																										FILE* oFile;
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																											int i;
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																												oFile = fopen("xApprox.txt","w");
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																													
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																														fprintf( oFile, "k=%d\n", k );
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																															
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																																for (i = 0; i < k*k; i++) { 
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																																    	fprintf( oFile, "%lf\n", x[i]);
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																																    	 	} 
- *
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																																    	 		fclose( oFile );
- *  				 							                       						                                                                 																			            											                  		       	  	                  																																																    	 		}
- *
- *   * PERMS:
- *    * DATE:
- *     */
-#include "mpi.h"
-#include "hw2harness.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-double* load_vec( char* filename, int* k );
-void save_vec( int k, double* x );
-
-
-
-int main( int argc, char* argv[] ) {
-	int writeOutX = 0;
-	int n, k;
-	int maxiterations = 1000;
-	int niters=0;
- 	double norm;
-	double* b;
-	double* x;
-	double time;
-	double t1, t2;
-	
-	MPI_Init( &argc, &argv );
-	
-	// Read command line args.
-	// 	// 1st case runs model problem, 2nd Case allows you to specify your own b vector
-	// 		if ( argc == 3 ) {
-	// 				k = atoi( argv[1] );
-	// 						n = k*k;
-	// 								// each processor calls cs240_getB to build its own part of the b vector!
-	// 									} else if  ( !strcmp( argv[1], "-i" ) && argc == 4 ) {
-	// 											b = load_vec( argv[2], &k );
-	// 												} else {
-	// 														printf( "\nCGSOLVE Usage: \n\t"
-	// 																	"Model Problem:\tmpirun -np [number_procs] cgsolve [k] [output_1=y_0=n]\n\t"
-	// 																				"Custom Input:\tmpirun -np [number_procs] cgsolve -i [input_filename] [output_1=y_0=n]\n\n");
-	// 																						exit(0);
-	// 																							}
-	// 																								writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
-	//
-	// 																									
-	// 																										// Start Timer
-	// 																											t1 = MPI_Wtime();
-	// 																												
-	// 																													// CG Solve here!
-	// 																													        double x_initial[n];
-	// 																													        	x = x_initial;	
-	// 																													        	 	// End Timer
-	// 																													        	 		t2 = MPI_Wtime();
-	// 																													        	 			
-	// 																													        	 				if ( writeOutX ) {
-	// 																													        	 						save_vec( k, x );
-	// 																													        	 							}
-	// 																													        	 									
-	// 																													        	 										// Output
-	// 																													        	 											printf( "Problem size (k): %d\n",k);
-	// 																													        	 												if(niters>0){
-	// 																													        	 												          printf( "Norm of the residual after %d iterations: %lf\n",niters,norm);
-	// 																													        	 												                  }
-	// 																													        	 												                  	printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
-	// 																													        	 												                  		
-	// 																													        	 												                  		        // Deallocate 
-	// 																													        	 												                  		                if(niters > 0){
-	// 																													        	 												                  		                	  free(b);
-	// 																													        	 												                  		                	  	}
-	// 																													        	 												                  		                	  	        if(niters > 0){
-	// 																													        	 												                  		                	  	                  free(x);
-	// 																													        	 												                  		                	  	                  	}
-	// 																													        	 												                  		                	  	                  		
-	// 																													        	 												                  		                	  	                  			MPI_Finalize();
-	// 																													        	 												                  		                	  	                  				
-	// 																													        	 												                  		                	  	                  					return 0;
-	// 																													        	 												                  		                	  	                  					}
-	//
-	//
-	// 																													        	 												                  		                	  	                  					/*
-	// 																													        	 												                  		                	  	                  					 * Supporting Functions
-	// 																													        	 												                  		                	  	                  					  *
-	// 																													        	 												                  		                	  	                  					   */
-	//
-	// 																													        	 												                  		                	  	                  					   // Load Function
-	// 																													        	 												                  		                	  	                  					   // NOTE: does not distribute data across processors
-	// 																													        	 												                  		                	  	                  					   double* load_vec( char* filename, int* k ) {
-	// 																													        	 												                  		                	  	                  					   	FILE* iFile = fopen(filename, "r");
-	// 																													        	 												                  		                	  	                  					   		int nScan;
-	// 																													        	 												                  		                	  	                  					   			int nTotal = 0;
-	// 																													        	 												                  		                	  	                  					   				int n;
-	// 																													        	 												                  		                	  	                  					   					
-	// 																													        	 												                  		                	  	                  					   						if ( iFile == NULL ) {
-	// 																													        	 												                  		                	  	                  					   								printf("Error reading file.\n");
-	// 																													        	 												                  		                	  	                  					   										exit(0);
-	// 																													        	 												                  		                	  	                  					   											}
-	// 																													        	 												                  		                	  	                  					   												
-	// 																													        	 												                  		                	  	                  					   													nScan = fscanf( iFile, "k=%d\n", k );
-	// 																													        	 												                  		                	  	                  					   														if ( nScan != 1 ) {
-	// 																													        	 												                  		                	  	                  					   																printf("Error reading dimensions.\n");
-	// 																													        	 												                  		                	  	                  					   																		exit(0);
-	// 																													        	 												                  		                	  	                  					   																			}
-	// 																													        	 												                  		                	  	                  					   																				
-	// 																													        	 												                  		                	  	                  					   																					n = (*k)*(*k);
-	// 																													        	 												                  		                	  	                  					   																						double* vec = (double *)malloc( n * sizeof(double) );
-	// 																													        	 												                  		                	  	                  					   																							
-	// 																													        	 												                  		                	  	                  					   																								do {
-	// 																													        	 												                  		                	  	                  					   																										nScan = fscanf( iFile, "%lf", &vec[nTotal++] );
-	// 																													        	 												                  		                	  	                  					   																											} while ( nScan >= 0 );
-	// 																													        	 												                  		                	  	                  					   																												
-	// 																													        	 												                  		                	  	                  					   																													if ( nTotal != n+1 ) {
-	// 																													        	 												                  		                	  	                  					   																															printf("Incorrect number of values scanned n=%d, nTotal=%d.\n",n,nTotal);
-	// 																													        	 												                  		                	  	                  					   																																	exit(0);
-	// 																													        	 												                  		                	  	                  					   																																		}
-	// 																													        	 												                  		                	  	                  					   																																			
-	// 																													        	 												                  		                	  	                  					   																																				return vec;
-	// 																													        	 												                  		                	  	                  					   																																				}
-	//
-	// 																													        	 												                  		                	  	                  					   																																				// Save a vector to a file.
-	// 																													        	 												                  		                	  	                  					   																																				void save_vec( int k, double* x ) { 
-	// 																													        	 												                  		                	  	                  					   																																					FILE* oFile;
-	// 																													        	 												                  		                	  	                  					   																																						int i;
-	// 																													        	 												                  		                	  	                  					   																																							oFile = fopen("xApprox.txt","w");
-	// 																													        	 												                  		                	  	                  					   																																								
-	// 																													        	 												                  		                	  	                  					   																																									fprintf( oFile, "k=%d\n", k );
-	// 																													        	 												                  		                	  	                  					   																																										
-	// 																													        	 												                  		                	  	                  					   																																											for (i = 0; i < k*k; i++) { 
-	// 																													        	 												                  		                	  	                  					   																																											    	fprintf( oFile, "%lf\n", x[i]);
-	// 																													        	 												                  		                	  	                  					   																																											    	 	} 
-	//
-	// 																													        	 												                  		                	  	                  					   																																											    	 		fclose( oFile );
-	// 																													        	 												                  		                	  	                  					   																																											    	 		}
-	//
