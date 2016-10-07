@@ -16,18 +16,14 @@ double dot_product, dAd;
 int i;
 for(i=rank*n/p+1;i<=(rank+1)*n/p;i++)
 {
-    printf("i = %d\n", i-rank*n/p-1);
     x[i-rank*n/p-1]=0;
-     printf("two i = %d\n", i-rank*n/p-1);
     r[i-rank*n/p-1]=b[i-rank*n/p-1];
-	 printf("three i = %d\n", i-rank*n/p-1);
     d[i-rank*n/p-1]=r[i-rank*n/p-1];
-     printf("four i = %d\n", i-rank*n/p-1);
 
 }
 dot_product = ddot(r,r);
 MPI_Reduce(&dot_product, &rtr,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-printf("dot_product %f\n", dot_product);
+printf("%d dot_product %f\n", rank, dot_product);
     if(rank==0)
 {
     normb=sqrt(rtr);
@@ -38,6 +34,7 @@ while(relres > 1e-6 && niters < maxiterations)
     Ad = matvec(d,n);
     dot_product = ddot(d,Ad);
     MPI_Reduce(&dot_product,&dAd,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+    printf("%d dot_product2 %f\n", rank,dot_product);
     if(rank==0)
     {
         alpha = rtr / dAd;
@@ -51,8 +48,10 @@ while(relres > 1e-6 && niters < maxiterations)
     }
     dot_product=ddot(r,r);
     MPI_Reduce(&dot_product,&rtr,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
+    printf("%d dot_product3 %f\n",rank, dot_product);
     if(rank==0)
     {
+	printf("%d rtr %f\n", rank,rtr);
         beta = rtr / rtrold;
         MPI_Bcast(&beta,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     }
@@ -63,7 +62,8 @@ while(relres > 1e-6 && niters < maxiterations)
         MPI_Bcast(&relres,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     }
 }
-
+for(i=0;i<n/p;i++)
+	printf("xi= %f", x[i]);
 return x;
     
 }
@@ -83,8 +83,10 @@ double* saxpy(double a, double* v, double* w)
 {
     double* answer;
     int i;
-    for(i=0;i<=sizeof(v);i++)
+    answer = malloc(sizeof(v) * sizeof(double));
+    for(i=0;i<sizeof(v);i++){
         answer[i]=v[i]+a*w[i];
+	}
     return answer;
 }
 double* matvec(double* v, int n)
