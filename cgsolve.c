@@ -62,6 +62,7 @@ while(relres > 1e-6 && niters < maxiterations)
         MPI_Bcast(&relres,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     }
 }
+printf("niters %d\n", niters);
 for(i=0;i<n/p;i++)
 	printf("xi= %f", x[i]);
 return x;
@@ -74,9 +75,9 @@ double ddot(double* v, double* w)
         printf("the size of two vectors does not match each other!\n");
     double sum=0;
     int i;
-    for(i=0;i<=sizeof(v);i++)
+    for(i=0;i<sizeof(v);i++)
         sum+=v[i]*w[i];
-        return sum;
+    return sum;
 }
 
 double* saxpy(double a, double* v, double* w)
