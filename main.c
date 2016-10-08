@@ -11,7 +11,7 @@ void save_vec( int k, double* x );
 int main( int argc, char* argv[] ) {
     int writeOutX = 0;
     int n, k, p, rank, i;
-    int maxiterations = 100/2;
+    int maxiterations = 1000;
     int niters=0;
     double norm;
     double* b;
@@ -47,8 +47,9 @@ int main( int argc, char* argv[] ) {
 //    double x_initial[n];
   //  x = x_initial;
     x = cgsolve(p, n, rank, b, niters, maxiterations);
-    for (i = 0; i < n/p; i++)
-        printf("rank %d xi %f\n",rank, x[i]);
+    double  x_initial[n];
+    MPI_Gather(x,n/p,MPI_DOUBLE, x_initial, n/p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    
     t2 = MPI_Wtime();
     if ( writeOutX ) {
         save_vec( k, x );
@@ -59,6 +60,8 @@ int main( int argc, char* argv[] ) {
         printf( "Norm of the residual after %d iterations: %lf\n",niters,norm);
     }
     printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
+    if(rank ==0)
+	    printf( "result %d \n",cs240_verify(x_initial, k, t2-t1));
     
     if(niters > 0){
         free(b);

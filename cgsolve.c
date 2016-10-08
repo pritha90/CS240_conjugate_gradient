@@ -39,8 +39,8 @@ while(relres > 1e-6 && niters < maxiterations)
     if(rank==0)
     {
         alpha = rtr / dAd;
-        MPI_Bcast(&alpha,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     }
+    MPI_Bcast(&alpha,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     x =saxpy(alpha,x,d,n,p);
    /* for(i=0;i<n/p;i++)
         printf("iloop xi= %f", x[i]);*/
@@ -56,15 +56,19 @@ while(relres > 1e-6 && niters < maxiterations)
     {
 	printf("%d rtr %f\n", rank,rtr);
         beta = rtr / rtrold;
-        MPI_Bcast(&beta,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     }
+    MPI_Bcast(&beta,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     d = saxpy(beta,r,d,n,p);
-    printf("saxpy done!\n");
+    printf("saxpy done! %d %f a=%f b=%f\n", rank, relres, alpha, beta);
     if(rank==0)
     {
+ 	printf("sqrt(rtr) %f\n", sqrt(rtr));
+ 	printf("mormb %f\n", normb);
         relres = sqrt(rtr) / normb;
-        MPI_Bcast(&relres,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
+        printf("mormb %f\n", relres);
     }
+    MPI_Bcast(&relres,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
+    
 }
 printf("niters %d\n", niters);
 /*for(i=0;i<n/p;i++)
