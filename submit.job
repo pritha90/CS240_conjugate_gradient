@@ -3,7 +3,7 @@
 #SBATCH --output="hellompi.%j.%N.out"
 #SBATCH --partition=shared
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks-per-node=4
 #SBATCH --export=ALL
 #SBATCH -t 00:05:00
 #SBATCH -A TG-ASC160059

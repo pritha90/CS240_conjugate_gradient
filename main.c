@@ -11,7 +11,7 @@ void save_vec( int k, double* x );
 int main( int argc, char* argv[] ) {
     int writeOutX = 0;
     int n, k, p, rank, i;
-    int maxiterations = 1000;
+    int maxiterations = 100/2;
     int niters=0;
     double norm;
     double* b;
@@ -22,13 +22,16 @@ int main( int argc, char* argv[] ) {
     MPI_Init( &argc, &argv );
     MPI_Comm_size(MPI_COMM_WORLD,&p);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+ 
+
+    printf("cs240_getB(i,n) = %f\n", cs240_getB(0,144));
     
     if ( argc == 3 ) {
         k = atoi( argv[1] );
         n = k*k;
         b  = malloc(n/p * sizeof(double));;
-        for(i=rank*n/p+1;i<=(rank+1)*n/p;i++){
-            b[i-rank*n/p-1] = cs240_getB(i,n);
+        for(i=rank*n/p;i < (rank+1)*n/p;i++){
+            b[i-rank*n/p] = cs240_getB(i,n);
 	}
     } else if  ( !strcmp( argv[1], "-i" ) && argc == 4 ) {
         b = load_vec( argv[2], &k );
@@ -40,13 +43,12 @@ int main( int argc, char* argv[] ) {
     }
     writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
    
-for ( i =0; i <n/p; i++)
-        printf("%f", b[i]);    
     t1 = MPI_Wtime();
 //    double x_initial[n];
   //  x = x_initial;
     x = cgsolve(p, n, rank, b, niters, maxiterations);
-    printf("size = %d %d", sizeof(b), sizeof(x));
+    for (i = 0; i < n/p; i++)
+        printf("rank %d xi %f\n",rank, x[i]);
     t2 = MPI_Wtime();
     if ( writeOutX ) {
         save_vec( k, x );
