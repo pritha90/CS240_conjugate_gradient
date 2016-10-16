@@ -3,11 +3,11 @@
 #SBATCH --output="hellompi.%j.%N.out"
 #SBATCH --partition=shared
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8
+#SBATCH --ntasks-per-node=1
 #SBATCH --export=ALL
-#SBATCH -t 00:05:00
+#SBATCH -t 00:30:00
 #SBATCH -A TG-ASC160059
 #This job runs with 1 node, 8 cores per node for a total of 24 cores.
 #ibrun in verbose mode will give binding detail
 cd /home/$USER/pritha/CS240_conjugate_gradient
-ibrun -v ./a.out 8 2
+ibrun -v ./a.out 864 2

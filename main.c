@@ -1,4 +1,4 @@
-#include "mpi.h"
+#include"mpi.h"
 #include "hw2harness.c"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,25 +11,26 @@ void save_vec( int k, double* x );
 int main( int argc, char* argv[] ) {
     int writeOutX = 0;
     int n, k, p, rank, i;
-    int maxiterations = 1000;
+    int maxiterations = 10000;
     int niters=0;
-    double norm;
+    double norm=1;
     double* b;
     double* x;
     double time;
     double t1, t2;
-    
+    double* x_initial;    
+
     MPI_Init( &argc, &argv );
     MPI_Comm_size(MPI_COMM_WORLD,&p);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
  
 
-    printf("cs240_getB(i,n) = %f\n", cs240_getB(0,144));
+//    printf("cs240_getB(i,n) = %f\n", cs240_getB(0,144));
     
     if ( argc == 3 ) {
         k = atoi( argv[1] );
         n = k*k;
-        b  = malloc(n/p * sizeof(double));;
+        b  = malloc(n/p * sizeof(double));
         for(i=rank*n/p;i < (rank+1)*n/p;i++){
             b[i-rank*n/p] = cs240_getB(i,n);
 	}
@@ -46,17 +47,23 @@ int main( int argc, char* argv[] ) {
     t1 = MPI_Wtime();
 //    double x_initial[n];
   //  x = x_initial;
-    x = cgsolve(p, n, rank, b, niters, maxiterations);
-    double  x_initial[n];
+    x = cgsolve(p, n, rank, b, &niters, maxiterations, &norm); 
+   if(niters>0 && rank ==0){
+        printf( "Norm of the residual after %d iterations: %lf\n",niters,norm);
+    } 
+    x_initial=malloc(n* sizeof(double));
     MPI_Gather(x,n/p,MPI_DOUBLE, x_initial, n/p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
     t2 = MPI_Wtime();
-    if ( writeOutX ) {
+        printf("Arrived here1");
+   
+   x=x_initial; 
+   if ( writeOutX ) {
         save_vec( k, x );
     }
-    
-    printf( "Problem size (k): %d\n",k);
-    if(niters>0){
+        printf("Arrived here2");
+
+    if(rank == 0){printf( "Problem size (k): %d\n",k);}
+    if(niters>0 && rank ==0){
         printf( "Norm of the residual after %d iterations: %lf\n",niters,norm);
     }
     printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);

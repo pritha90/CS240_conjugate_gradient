@@ -8,18 +8,18 @@ double ddot(double* v, double* w, int n, int p);
 double* saxpy(double a, double* v, double* w, int n, int p);
 double* matvec(double *v, int n, int rank, int p);
 
-double* cgsolve(int p, int n, int rank, double *b, int niters, int maxiterations )
+double* cgsolve(int p, int n, int rank, double *b, int *niters, int maxiterations, double *norm)
 {
     
 double relres=1, alpha, beta,normb,rtrold,rtr;
 double * Ad = malloc(n/p * sizeof(double)), * d = malloc(n/p * sizeof(double)), *x = malloc(n/p * sizeof(double)), *r = malloc(n/p * sizeof(double));
 double dot_product, dAd;
 int i;
-for(i=rank*n/p+1;i<=(rank+1)*n/p;i++)
+for(i=0;i<=n/p-1;i++)
 {
-    x[i-rank*n/p-1]=0;
-    r[i-rank*n/p-1]=b[i-rank*n/p-1];
-    d[i-rank*n/p-1]=r[i-rank*n/p-1];
+    x[i]=0;
+    r[i]=b[i];
+    d[i]=r[i];
 
 }
 dot_product = ddot(r,r,n,p);
@@ -29,9 +29,9 @@ MPI_Reduce(&dot_product, &rtr,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
 {
     normb=sqrt(rtr);
 }
-while(relres > 1e-6 && niters < maxiterations)
+while(relres > 1e-8 && *niters < maxiterations)
 {
-    niters = niters+1;
+   *niters = *niters+1;
     Ad = matvec(d, n, rank, p);
     dot_product = ddot(d,Ad,n,p);
     MPI_Reduce(&dot_product,&dAd,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
@@ -44,7 +44,7 @@ while(relres > 1e-6 && niters < maxiterations)
     x =saxpy(alpha,x,d,n,p);
    /* for(i=0;i<n/p;i++)
         printf("iloop xi= %f", x[i]);*/
-    r =saxpy(-alpha,r,Ad,n,p);
+    r =saxpy(-1*alpha,r,Ad,n,p);
     if(rank==0)
     {
         rtrold = rtr;
@@ -54,23 +54,25 @@ while(relres > 1e-6 && niters < maxiterations)
     //printf("%d dot_product3 %f\n",rank, dot_product);
     if(rank==0)
     {
-	printf("%d rtr %f\n", rank,rtr);
+//	printf("%d rtr %f\n", rank,rtr);
         beta = rtr / rtrold;
     }
     MPI_Bcast(&beta,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     d = saxpy(beta,r,d,n,p);
-    printf("saxpy done! %d %f a=%f b=%f\n", rank, relres, alpha, beta);
+ //   printf("saxpy done! %d %f a=%f b=%f\n", rank, relres, alpha, beta);
     if(rank==0)
     {
- 	printf("sqrt(rtr) %f\n", sqrt(rtr));
- 	printf("mormb %f\n", normb);
+ //	printf("sqrt(rtr) %f\n", sqrt(rtr));
+ //	printf("mormb %f\n", normb);
         relres = sqrt(rtr) / normb;
-        printf("mormb %f\n", relres);
+   //     printf("mormb %f\n", relres);
     }
     MPI_Bcast(&relres,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     
 }
-printf("niters %d\n", niters);
+if(rank == 0){
+    *norm=sqrt(rtr);
+    }
 /*for(i=0;i<n/p;i++)
 	printf("xi= %f", x[i]);*/
 return x;
@@ -92,7 +94,7 @@ double* saxpy(double a, double* v, double* w, int n, int p)
 {
     double* answer;
     int i;
-    answer = malloc(sizeof(v) * sizeof(double));
+    answer = malloc(n/p * sizeof(double));
     for(i=0;i<n/p;i++){
         answer[i]=v[i]+a*w[i];
 	}
