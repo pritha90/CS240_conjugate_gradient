@@ -35,15 +35,12 @@ while(relres > 1e-8 && *niters < maxiterations)
     Ad = matvec(d, n, rank, p);
     dot_product = ddot(d,Ad,n,p);
     MPI_Reduce(&dot_product,&dAd,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
- //   printf("%d dot_product2 %f\n", rank,dot_product);
     if(rank==0)
     {
         alpha = rtr / dAd;
     }
     MPI_Bcast(&alpha,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     x =saxpy(alpha,x,d,n,p);
-   /* for(i=0;i<n/p;i++)
-        printf("iloop xi= %f", x[i]);*/
     r =saxpy(-1*alpha,r,Ad,n,p);
     if(rank==0)
     {
@@ -51,21 +48,16 @@ while(relres > 1e-8 && *niters < maxiterations)
     }
     dot_product=ddot(r,r,n,p);
     MPI_Reduce(&dot_product,&rtr,1,MPI_DOUBLE,MPI_SUM,0,MPI_COMM_WORLD);
-    //printf("%d dot_product3 %f\n",rank, dot_product);
+ 
     if(rank==0)
     {
-//	printf("%d rtr %f\n", rank,rtr);
         beta = rtr / rtrold;
     }
     MPI_Bcast(&beta,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     d = saxpy(beta,r,d,n,p);
- //   printf("saxpy done! %d %f a=%f b=%f\n", rank, relres, alpha, beta);
     if(rank==0)
     {
- //	printf("sqrt(rtr) %f\n", sqrt(rtr));
- //	printf("mormb %f\n", normb);
         relres = sqrt(rtr) / normb;
-   //     printf("mormb %f\n", relres);
     }
     MPI_Bcast(&relres,1, MPI_DOUBLE,0,MPI_COMM_WORLD);
     

@@ -1,5 +1,5 @@
 #include"mpi.h"
-#include "hw2harness.c"
+//#include "hw2harness.c"
 #include <stdio.h>
 #include <stdlib.h>
 #include "cgsolve.c"
@@ -11,7 +11,7 @@ void save_vec( int k, double* x );
 int main( int argc, char* argv[] ) {
     int writeOutX = 0;
     int n, k, p, rank, i;
-    int maxiterations = 10000;
+    int maxiterations = 100;
     int niters=0;
     double norm=1;
     double* b;
@@ -49,7 +49,7 @@ int main( int argc, char* argv[] ) {
   //  x = x_initial;
     x = cgsolve(p, n, rank, b, &niters, maxiterations, &norm); 
    if(niters>0 && rank ==0){
-        printf( "Norm of the residual after %d iterations: %lf\n",niters,norm);
+        printf( "Norm of the residual after %d iterations: %.15lf\n",niters,norm);
     } 
     x_initial=malloc(n* sizeof(double));
     MPI_Gather(x,n/p,MPI_DOUBLE, x_initial, n/p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
